@@ -11,13 +11,13 @@ SPYKES_KEY = 'SPYKES'
 DEFAULT_DATA_DIR = '.spykes'
 
 # Defines the default colors for the population plot.
-DEFAULT_POPULATION_COLORS = [
-    '#134B64',
-    '#EF3E34',
-    '#02A68E',
-    '#FF07CD',
+FAULT_POPULATION_COLORS = [
+    '#6F9CE8',
+    '#E8BB6F',
+    '#197E8F',
+    '#E8806F',
+    '#88B140',
 ]
-
 
 def get_home_directory():
     '''Returns the home directory, as a string.

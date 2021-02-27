@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 from .. import utils
 from ..config import DEFAULT_POPULATION_COLORS
@@ -85,28 +86,22 @@ class NeuroVis(object):
         # Loop over each raster
         for cond_id in trials:
             # Select events relevant to this raster
-            selected_events = df[event][trials[cond_id]]
+            selected_events = df[event].iloc[trials[cond_id]]
 
             raster = []
 
             bin_template = 1e-3 * \
                 np.arange(window[0], window[1] + binsize, binsize)
+
             for event_time in selected_events:
                 bins = event_time + bin_template
-
                 # consider only spikes within window
-                searchsorted_idx = np.squeeze(np.searchsorted(self.spiketimes,
-                                              [event_time + 1e-3 *
-                                               window[0],
-                                               event_time + 1e-3 *
-                                               window[1]]))
+                start_idx = np.searchsorted(self.spiketimes, event_time + 1e-3 * window[0], "left")
+                end_idx = np.searchsorted(self.spiketimes, event_time + 1e-3 * window[1], "right" )
 
                 # bin the spikes into time bins
-
-                spike_counts = np.histogram(
-                    self.spiketimes[searchsorted_idx[0]:searchsorted_idx[1]],
-                    bins)[0]
-
+                spike_counts = np.histogram(self.spiketimes[start_idx:end_idx],bins)[0]
+                
                 raster.append(spike_counts)
 
             rasters['data'][cond_id] = np.array(raster)
@@ -244,6 +239,7 @@ class NeuroVis(object):
         rasters = self.get_raster(event=event, df=df,
                                   conditions=conditions,
                                   window=window, binsize=binsize, plot=False)
+
 
         # Initialize PSTH
         psth = dict()

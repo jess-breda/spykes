@@ -63,6 +63,7 @@ class NeuroVis(object):
         window = [np.floor(window[0] / binsize) * binsize,
                   np.ceil(window[1] / binsize) * binsize]
 
+
         # Get a set of binary indicators for trials of interest
         if conditions:
             trials = dict()
@@ -81,9 +82,11 @@ class NeuroVis(object):
             'window': window,
             'binsize': binsize,
             'data': {},
+            'nandata': {}
         }
 
         # Loop over each raster
+
         for cond_id in trials:
             # Select events relevant to this raster
             selected_events = df[event].iloc[trials[cond_id]]
@@ -93,18 +96,27 @@ class NeuroVis(object):
             bin_template = 1e-3 * \
                 np.arange(window[0], window[1] + binsize, binsize)
 
+
+
+
             for event_time in selected_events:
                 bins = event_time + bin_template
+
                 # consider only spikes within window
                 start_idx = np.searchsorted(self.spiketimes, event_time + 1e-3 * window[0], "left")
                 end_idx = np.searchsorted(self.spiketimes, event_time + 1e-3 * window[1], "right" )
 
                 # bin the spikes into time bins
                 spike_counts = np.histogram(self.spiketimes[start_idx:end_idx],bins)[0]
-                
+
                 raster.append(spike_counts)
 
-            rasters['data'][cond_id] = np.array(raster)
+            raster = np.array(raster)
+            raster_nan = np.where(raster == 0, np.nan, raster)
+
+            rasters['data'][cond_id] = raster
+            rasters['nandata'][cond_id] = raster_nan
+
 
         # Show the raster
         if plot is True:
@@ -253,11 +265,11 @@ class NeuroVis(object):
         # Compute the PSTH
         for cond_id in np.sort(list(rasters['data'])):
             psth['data'][cond_id] = dict()
+            rasternan = rasters['nandata'][cond_id]
             raster = rasters['data'][cond_id]
-            mean_psth = np.mean(raster, axis=0) / (1e-3 * binsize)
-            std_psth = np.sqrt(np.var(raster, axis=0)) / (1e-3 * binsize)
-
-            sem_psth = std_psth / np.sqrt(float(np.shape(raster)[0]))
+            mean_psth = np.nanmean(rasternan, axis=0) / (1e-3 * binsize)
+            std_psth = np.sqrt(np.nanvar(rasternan, axis=0)) / (1e-3 * binsize)
+            sem_psth = std_psth / np.sqrt(float(np.shape(rasternan)[0]))
 
             psth['data'][cond_id]['mean'] = mean_psth
             psth['data'][cond_id]['sem'] = sem_psth
